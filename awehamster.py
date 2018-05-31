@@ -5,6 +5,8 @@ import gobject
 import time
 import calendar
 
+from subprocess import Popen, PIPE
+
 class AwesomeHamster(gobject.GObject):
     def __init__(self):
         gobject.GObject.__init__(self)
@@ -14,10 +16,10 @@ class AwesomeHamster(gobject.GObject):
         self.bus.add_signal_receiver(self._on_facts_changed, 'FactsChanged', 'org.gnome.Hamster')
 
         proxyHamster = self.bus.get_object('org.gnome.Hamster', '/org/gnome/Hamster')
-        proxyAwesome = self.bus.get_object('org.naquadah.awesome.awful', '/')
+        #proxyAwesome = self.bus.get_object('org.naquadah.awesome.awful', '/')
 
         self.ifaceHamster = dbus.Interface(proxyHamster, 'org.gnome.Hamster')
-        self.ifaceAwesome = dbus.Interface(proxyAwesome, 'org.naquadah.awesome.awful.Remote')
+        #self.ifaceAwesome = dbus.Interface(proxyAwesome, 'org.naquadah.awesome.awful.Remote')
 
 
     def _pretty_format(self, number):
@@ -40,9 +42,12 @@ class AwesomeHamster(gobject.GObject):
             currentTime = calendar.timegm(time.localtime())
             elapsedTime = currentTime - startTime
 
+        client = Popen('awesome-client', stdin=PIPE)
+
         if startTime == 0 or endTime != 0:
             print "No activity"
-            self.ifaceAwesome.Eval('myawehamsterbox:set_text("No activity")')
+            #self.ifaceAwesome.Eval('myawehamsterbox:set_text("No activity")')
+            client.stdin.write('myhamsterbox:set_text("No activity")')
         else:
             minutes = elapsedTime / 60
             hours = minutes / 60
@@ -50,7 +55,10 @@ class AwesomeHamster(gobject.GObject):
             activity = (f[4]).encode("utf-8")
             category = (f[6]).encode("utf-8")
             print "%s@%s %s:%s" % (activity, category, self._pretty_format(hours), self._pretty_format(minutes))
-            self.ifaceAwesome.Eval('myawehamsterbox:set_text("%s@%s %s:%s")' % (activity, category, self._pretty_format(hours), self._pretty_format(minutes)))
+            client.stdin.write('myhamsterbox:set_text("%s@%s %s:%s")' % (activity, category, self._pretty_format(hours), self._pretty_format(minutes)))
+            #self.ifaceAwesome.Eval('myawehamsterbox:set_text("%s@%s %s:%s")' % (activity, category, self._pretty_format(hours), self._pretty_format(minutes)))
+        client.stdin.close()
+        client.wait()
 
         return True
 
