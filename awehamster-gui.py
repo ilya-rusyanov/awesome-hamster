@@ -32,7 +32,12 @@ class AwesomeHamsterGui():
             self.ifaceHamster.AddFact(text, 0, 0, False)
             self.dialog.destroy()
 
+    def on_key_down(self, widget, event):
+        if event.keyval == 65364:
+            widget.set_text(self.activitiesList[self.histcounter])
+
     def run(self):
+        self.histcounter = 0
         listStore = gtk.ListStore(str)
         maxLen = 0
         for act in self.activitiesList:
@@ -46,12 +51,15 @@ class AwesomeHamsterGui():
         entryCompletion = gtk.EntryCompletion()
         entryCompletion.set_model(listStore)
         entryCompletion.set_text_column(0)
+        entryCompletion.set_minimum_key_length(0)
         entryCompletion.set_match_func(self._match_anywhere, None)
+        entryCompletion.set_inline_selection(True)
 
-        entry = gtk.Entry()
-        entry.set_completion(entryCompletion)
-        entry.set_width_chars(maxLen + 5)
-        entry.connect("activate", self._on_entry_activate)
+        self.entry = gtk.Entry()
+        self.entry.set_completion(entryCompletion)
+        self.entry.set_width_chars(maxLen + 5)
+        self.entry.connect("activate", self._on_entry_activate)
+        self.entry.connect('key_press_event', self.on_key_down)
 
         self.dialog = gtk.Dialog("New activity",
                                  None,
@@ -59,10 +67,10 @@ class AwesomeHamsterGui():
                                  (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT))
 
         hBox.pack_start(label)
-        hBox.pack_start(entry)
+        hBox.pack_start(self.entry)
         self.dialog.vbox.pack_start(hBox)
         label.show()
-        entry.show()
+        self.entry.show()
         hBox.show()
         self.dialog.set_position(gtk.WIN_POS_CENTER_ALWAYS)
         self.dialog.run()
